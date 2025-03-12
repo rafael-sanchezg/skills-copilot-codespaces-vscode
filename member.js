@@ -5,4 +5,4 @@ function skillsMember() {
         skills: ["HTML", "CSS", "JS"],
         salary: 1000,
     };
-} {}
+} 
