@@ -1,28 +1,60 @@
-// create a web server
+// Create web server
 var express = require('express');
-var bodyParser = require('body-parser');
 var app = express();
+var path = require('path');
+var fs = require('fs');
+var bodyParser = require('body-parser');
+var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
-app.use(bodyParser.urlencoded({ extended: true }));
+// Set view engine to ejs
+app.set('view engine', 'ejs');
 
-var comments = [];
+// Set path to static files
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Render index.ejs
+app.get('/', function(req, res) {
+  res.render('index');
+});
+
+// Render comments.ejs
 app.get('/comments', function(req, res) {
-  res.send(comments);
+  res.render('comments');
 });
 
-app.get('/comments/new', function(req, res) {
-  res.send('<form method="post" action="/comments">' +
-           '<input type="text" name="comment">' +
-           '<input type="submit" value="Submit">' +
-           '</form>');
+// Read comments.json and render comments.ejs
+app.get('/comments', function(req, res) {
+  fs.readFile('comments.json', 'utf8', function(err, data) {
+    if (err) {
+      console.log(err);
+    } else {
+      var obj = JSON.parse(data);
+      res.render('comments', { comments: obj });
+    }
+  });
 });
 
-app.post('/comments', function(req, res) {
-  comments.push(req.body.comment);
-  res.redirect('/comments');
+// Write comments to comments.json and render comments.ejs
+app.post('/comments', urlencodedParser, function(req, res) {
+  fs.readFile('comments.json', 'utf8', function(err, data) {
+    if (err) {
+      console.log(err);
+    } else {
+      var obj = JSON.parse(data);
+      obj.push(req.body);
+      var json = JSON.stringify(obj);
+      fs.writeFile('comments.json', json, 'utf8', function(err) {
+        if (err) {
+          console.log(err);
+        } else {
+          res.render('comments', { comments: obj });
+        }
+      });
+    }
+  });
 });
 
-app.listen(3000, function() {
-  console.log('Server listening on port 3000');
+// Start server on port 8080
+app.listen(8080, function() {
+  console.log('Server started on http://localhost:8080');
 });
